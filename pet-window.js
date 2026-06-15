@@ -30,10 +30,10 @@ export function activateWindow(ctx) {
   // ── 平滑移动 ──
   let isMoving = false, roamEnabled = true;
   let tgtX = null, tgtY = null;
-  let moveSpeed = 180;                   // px/s
+  let moveSpeed = 180;
   let moveRafId = null;
   let moveLastTick = 0, moveDX = 0, moveDY = 0;
-  let winPos = { x: 0, y: 0 };          // 本地跟踪的窗口位置
+  let winPos = { x: 0, y: 0 };
   let roamTimer = null;
 
   container.innerHTML = `
@@ -76,7 +76,10 @@ export function activateWindow(ctx) {
 
   // ── 加载图片 ──
   (async function() {
-    try { const r = await ctx.fs.getFileUrl(ctx.descriptor.directory+'/assets/character.png'); if(r.ok) petImg.src = r.url; } catch(_){}
+    try {
+      const r = await ctx.fs.getFileUrl(ctx.descriptor.directory+'/assets/character.webp');
+      if (r.ok || r?.url) petImg.src = r.url;
+    } catch(_){}
   })();
 
   function showBubble(text, ms=2500) { bubbleText.textContent = text; bubble.classList.remove('hidden'); clearTimeout(bubble._timer); bubble._timer = setTimeout(()=>bubble.classList.add('hidden'), ms); }
@@ -129,8 +132,6 @@ export function activateWindow(ctx) {
     #pet-face-overlay{position:absolute;inset:0;pointer-events:none;z-index:2}
     @keyframes petFloat{0%,100%{transform:translateY(0)scale(1)rotate(0deg)}25%{transform:translateY(-4px)scale(1.01)rotate(0.5deg)}50%{transform:translateY(-8px)scale(1.02)rotate(0deg)}75%{transform:translateY(-4px)scale(1.01)rotate(-0.5deg)}}
     .pet-floating{animation:petFloat 3s ease-in-out infinite}
-    @keyframes petWalk{0%,100%{transform:translateY(0)scale(1)rotate(0deg)}12%{transform:translateY(-1px)scale(1.005)rotate(1deg)}25%{transform:translateY(-2px)scale(1.01)rotate(0.5deg)}37%{transform:translateY(-1px)scale(1.005)rotate(-0.5deg)}50%{transform:translateY(0)scale(1)rotate(-1deg)}62%{transform:translateY(-1px)scale(1.005)rotate(-0.5deg)}75%{transform:translateY(-2px)scale(1.01)rotate(0.5deg)}87%{transform:translateY(-1px)scale(1.005)rotate(1deg)}}
-    .pet-moving{animation:petWalk 0.8s ease-in-out infinite}
     @keyframes petWiggle{0%,100%{transform:rotate(0deg)scale(1.05)}20%{transform:rotate(-4deg)scale(1.08)}40%{transform:rotate(3deg)scale(1.06)}60%{transform:rotate(-2deg)scale(1.07)}80%{transform:rotate(1deg)scale(1.05)}}
     .pet-wiggle{animation:petWiggle 0.5s ease-in-out}
     #pet-music-bars{position:absolute;bottom:5%;left:50%;transform:translateX(-50%);display:flex;align-items:flex-end;gap:2px;height:30px;z-index:5;width:360px;justify-content:center}
@@ -154,54 +155,32 @@ export function activateWindow(ctx) {
     }
   }
 
-  function startMusicAnimation() {
-    stopMusicAnimation();
-    animTimer = setInterval(updateBars, 100);
-  }
-
-  function stopMusicAnimation() {
-    if (animTimer) { clearInterval(animTimer); animTimer = null; }
-    barEls.forEach(b => b.style.height = '4px');
-  }
+  function startMusicAnimation() { stopMusicAnimation(); animTimer = setInterval(updateBars, 100); }
+  function stopMusicAnimation() { if (animTimer) { clearInterval(animTimer); animTimer = null; } barEls.forEach(b => b.style.height = '4px'); }
 
   // ── 轮询 ──
   let latestSpec = null;
-
   async function pollPlayback() {
     try {
       const data = await ctx.storage.get(STORAGE_KEY);
       if (!data) return;
-
       const spec = await ctx.storage.get(SPECTRUM_KEY);
       if (spec) latestSpec = spec;
-
       const trackChanged = data.trackTitle && data.trackTitle !== lastTrackTitle;
       isPlaying = !!data.isPlaying;
-
-      if (trackChanged) {
-        lastTrackTitle = data.trackTitle;
-        if (isPlaying) {
-          showBubble(`正在播放: ${data.trackTitle} 🎵`, 3000);
-        }
-      }
-
-      if (isPlaying && musicReactionEnabled) {
-        musicBars.classList.remove('hidden');
-        startMusicAnimation();
-      } else {
-        musicBars.classList.add('hidden');
-        stopMusicAnimation();
-      }
-    } catch(_) {}
+      if (trackChanged) { lastTrackTitle = data.trackTitle; if (isPlaying) showBubble(`正在播放: ${data.trackTitle} 🎵`, 3000); }
+      if (isPlaying && musicReactionEnabled) { musicBars.classList.remove('hidden'); startMusicAnimation(); }
+      else { musicBars.classList.add('hidden'); stopMusicAnimation(); }
+    } catch (_) {}
   }
   pollTimer = setInterval(pollPlayback, 200);
   setTimeout(pollPlayback, 500);
 
   // ── 闲置 ──
   idleTimer = setInterval(() => {
-    if (Math.random()>0.5) showBubble(LINES_IDLE[Math.floor(Math.random()*LINES_IDLE.length)]);
-    if (currentFace===FaceState.NORMAL && Math.random()>0.6) setFace(FaceState.SLEEPY, 1500);
-  }, 8000+Math.random()*6000);
+    if (Math.random() > 0.5) showBubble(LINES_IDLE[Math.floor(Math.random() * LINES_IDLE.length)]);
+    if (currentFace === FaceState.NORMAL && Math.random() > 0.6) setFace(FaceState.SLEEPY, 1500);
+  }, 8000 + Math.random() * 6000);
 
   // ═══ 拖拽（CSS transform 视觉位移 + 松手一次性 IPC）═══
   petImg.addEventListener('mousedown', async (e) => {
@@ -210,7 +189,7 @@ export function activateWindow(ctx) {
     try {
       const b = await ctx.window.getBounds();
       if (b) { winSX = b.x; winSY = b.y; }
-    } catch(_) { winSX = 0; winSY = 0; }
+    } catch (_) { winSX = 0; winSY = 0; }
     document.body.style.transition = 'none';
   });
 
@@ -227,7 +206,7 @@ export function activateWindow(ctx) {
     if (isDragging) {
       const fx = winSX + dragDX, fy = winSY + dragDY;
       ctx.window.move({ x: fx, y: fy }).catch(() => {});
-      winPos.x = fx; winPos.y = fy;  // 同步位置跟踪
+      winPos.x = fx; winPos.y = fy;
       document.body.style.transform = '';
       document.body.style.transition = 'transform 0.12s ease-out';
       setTimeout(() => showBubble(
@@ -240,16 +219,11 @@ export function activateWindow(ctx) {
   });
 
   // ═══ 平滑移动 ═══
-  function initPosition() {
-    ctx.window.getBounds().then(b => {
-      if (b) { winPos.x = b.x; winPos.y = b.y; }
-    });
-  }
+  function initPosition() { ctx.window.getBounds().then(b => { if (b) { winPos.x = b.x; winPos.y = b.y; } }); }
   initPosition();
 
   function moveTo(x, y) {
     tgtX = x; tgtY = y;
-    // 读取当前真实窗口位置（防止拖拽/外部改动导致不同步）
     ctx.window.getBounds().then(b => {
       if (b) { winPos.x = b.x; winPos.y = b.y; }
       if (!isMoving) startMoving();
@@ -257,100 +231,70 @@ export function activateWindow(ctx) {
   }
 
   function startMoving() {
-    isMoving = true;
-    moveLastTick = performance.now();
-    charDiv.classList.remove('pet-floating');
-    charDiv.classList.add('pet-moving');
-    clearRoamTimer();
-    moveTick();
+    isMoving = true; moveLastTick = performance.now();
+    if (floatEnabled) charDiv.classList.remove('pet-floating');
+    clearRoamTimer(); moveTick();
   }
 
   function moveTick() {
     if (!isMoving || tgtX === null || tgtY === null) { stopMoving(); return; }
-
     const now = performance.now();
-    const dt = Math.min((now - moveLastTick) / 1000, 0.05); // cap at 50ms
+    const dt = Math.min((now - moveLastTick) / 1000, 0.05);
     moveLastTick = now;
-
     const dx = tgtX - winPos.x, dy = tgtY - winPos.y;
     const dist = Math.sqrt(dx * dx + dy * dy);
-
-    // 到达阈值
     if (dist < 3) {
       winPos.x = tgtX; winPos.y = tgtY;
       ctx.window.move({ x: Math.round(winPos.x), y: Math.round(winPos.y) }).catch(() => {});
-      stopMoving();
-      return;
+      stopMoving(); return;
     }
-
-    // 按速度步进
     const step = moveSpeed * dt;
     const ratio = Math.min(step / dist, 1);
-    winPos.x += dx * ratio;
-    winPos.y += dy * ratio;
-
-    // 追踪移动方向（用于后续面向）
+    winPos.x += dx * ratio; winPos.y += dy * ratio;
     moveDX = dx; moveDY = dy;
-
-    // ── 屏幕边缘检测 ──
     const margin = 30;
-    const maxX = (screen.availWidth  || 1920) - 200; // 窗口默认宽
-    const maxY = (screen.availHeight || 1080) - 360; // 窗口默认高
+    const maxX = (screen.availWidth || 1920) - 200;
+    const maxY = (screen.availHeight || 1080) - 360;
     let bounced = false;
-
-    if (winPos.x < margin)   { winPos.x = margin;   bounced = true; }
-    if (winPos.y < margin)   { winPos.y = margin;   bounced = true; }
-    if (winPos.x > maxX)     { winPos.x = maxX;     bounced = true; }
-    if (winPos.y > maxY)     { winPos.y = maxY;     bounced = true; }
-
+    if (winPos.x < margin) { winPos.x = margin; bounced = true; }
+    if (winPos.y < margin) { winPos.y = margin; bounced = true; }
+    if (winPos.x > maxX) { winPos.x = maxX; bounced = true; }
+    if (winPos.y > maxY) { winPos.y = maxY; bounced = true; }
     if (bounced) {
-      // 折返：往反方向随机一段距离
       tgtX = Math.max(margin, Math.min(maxX, winPos.x + (dx > 0 ? -200 : 200) * (0.5 + Math.random() * 0.5)));
       tgtY = Math.max(margin, Math.min(maxY, winPos.y + (dy > 0 ? -150 : 150) * (0.5 + Math.random() * 0.5)));
       showBubble('呀，没路了～', 1200);
     }
-
     ctx.window.move({ x: Math.round(winPos.x), y: Math.round(winPos.y) }).catch(() => {});
     moveRafId = requestAnimationFrame(moveTick);
   }
 
   function stopMoving() {
-    isMoving = false;
-    tgtX = null; tgtY = null;
+    isMoving = false; tgtX = null; tgtY = null;
     if (moveRafId) { cancelAnimationFrame(moveRafId); moveRafId = null; }
-    charDiv.classList.remove('pet-moving');
     if (floatEnabled) charDiv.classList.add('pet-floating');
     scheduleRoam();
   }
 
   function setMoveSpeed(s) { moveSpeed = Math.max(40, Math.min(3000, s)); }
 
-  // ── 自动漫游 ──
   function scheduleRoam() {
-    clearRoamTimer();
-    if (!roamEnabled || isMoving) return;
+    clearRoamTimer(); if (!roamEnabled || isMoving) return;
     roamTimer = setTimeout(() => {
       if (!roamEnabled || isMoving) return;
       const margin = 40;
-      const maxX = (screen.availWidth  || 1920) - 280;
+      const maxX = (screen.availWidth || 1920) - 280;
       const maxY = (screen.availHeight || 1080) - 440;
-      const rx = margin + Math.random() * (maxX - margin);
-      const ry = margin + Math.random() * (maxY - margin);
-      moveTo(rx, ry);
+      moveTo(margin + Math.random() * (maxX - margin), margin + Math.random() * (maxY - margin));
     }, 5000 + Math.random() * 10000);
   }
 
-  function clearRoamTimer() {
-    if (roamTimer) { clearTimeout(roamTimer); roamTimer = null; }
-  }
+  function clearRoamTimer() { if (roamTimer) { clearTimeout(roamTimer); roamTimer = null; } }
 
-  // ── 外部调用接口 ──
-  ctx.window.moveTo = moveTo;
-  ctx.window.stopMove = stopMoving;
+  ctx.window.moveTo = moveTo; ctx.window.stopMove = stopMoving;
   ctx.window.setMoveSpeed = setMoveSpeed;
   ctx.window.setRoam = function(e) { roamEnabled = e; if (e) scheduleRoam(); else clearRoamTimer(); };
 
-  // 初始化后开始漫游
   setTimeout(() => { if (roamEnabled) scheduleRoam(); }, 3000);
 
   // ── 悬停 ──
@@ -358,20 +302,21 @@ export function activateWindow(ctx) {
   petImg.addEventListener('mouseleave',()=>{charDiv.classList.remove('pet-wiggle');petImg.style.transform='';});
 
   // ── 右键菜单 ──
-  document.addEventListener('contextmenu',(e)=>{e.preventDefault();ctxMenu.classList.remove('hidden');ctxMenu.style.left=e.clientX+'px';ctxMenu.style.top=e.clientY+'px';const r=ctxMenu.getBoundingClientRect();if(r.right>innerWidth)ctxMenu.style.left=(innerWidth-r.width-5)+'px';if(r.bottom>innerHeight)ctxMenu.style.top=(innerHeight-r.height-5)+'px';container.querySelector('#pm-float-status').textContent=floatEnabled?'✓':'';container.querySelector('#pm-music-status').textContent=musicReactionEnabled?'✓':'';});
-  document.addEventListener('click',(e)=>{if(!ctxMenu.contains(e.target))ctxMenu.classList.add('hidden');});
-  document.addEventListener('keydown',(e)=>{if(e.key==='Escape')ctxMenu.classList.add('hidden');});
-  ctxMenu.addEventListener('click',(e)=>{const item=e.target.closest('.pm-item');if(!item)return;ctxMenu.classList.add('hidden');const action=item.dataset.action;
-    if(action==='toggle-float'){floatEnabled=!floatEnabled;charDiv.classList.toggle('pet-floating',floatEnabled);showBubble(floatEnabled?'飘起来啦～ ✨':'让我站一会儿');}
-    else if(action==='toggle-music'){musicReactionEnabled=!musicReactionEnabled;if(!musicReactionEnabled){stopAnimation();musicBars.classList.add('hidden');}showBubble(musicReactionEnabled?'跟着音乐摇摆！ 🎶':'让我安静会儿 🤫');}
-    container.querySelector('#pm-float-status').textContent=floatEnabled?'✓':'';container.querySelector('#pm-music-status').textContent=musicReactionEnabled?'✓':'';
+  document.addEventListener('contextmenu', (e) => { e.preventDefault(); ctxMenu.classList.remove('hidden'); ctxMenu.style.left = e.clientX + 'px'; ctxMenu.style.top = e.clientY + 'px'; const r = ctxMenu.getBoundingClientRect(); if (r.right > innerWidth) ctxMenu.style.left = (innerWidth - r.width - 5) + 'px'; if (r.bottom > innerHeight) ctxMenu.style.top = (innerHeight - r.height - 5) + 'px'; container.querySelector('#pm-float-status').textContent = floatEnabled ? '✓' : ''; container.querySelector('#pm-music-status').textContent = musicReactionEnabled ? '✓' : ''; });
+  document.addEventListener('click', (e) => { if (!ctxMenu.contains(e.target)) ctxMenu.classList.add('hidden'); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') ctxMenu.classList.add('hidden'); });
+  ctxMenu.addEventListener('click', (e) => {
+    const item = e.target.closest('.pm-item'); if (!item) return; ctxMenu.classList.add('hidden'); const action = item.dataset.action;
+    if (action === 'toggle-float') { floatEnabled = !floatEnabled; charDiv.classList.toggle('pet-floating', floatEnabled); showBubble(floatEnabled ? '飘起来啦～ ✨' : '让我站一会儿'); }
+    else if (action === 'toggle-music') { musicReactionEnabled = !musicReactionEnabled; if (!musicReactionEnabled) { stopMusicAnimation(); musicBars.classList.add('hidden'); } showBubble(musicReactionEnabled ? '跟着音乐摇摆！ 🎶' : '让我安静会儿 🤫'); }
+    container.querySelector('#pm-float-status').textContent = floatEnabled ? '✓' : ''; container.querySelector('#pm-music-status').textContent = musicReactionEnabled ? '✓' : '';
   });
 
   // ── 清理 ──
-  ctx.dispose(()=>{
+  ctx.dispose(() => {
     clearInterval(idleTimer); clearInterval(pollTimer); clearInterval(animTimer);
-    if(faceTimer) clearTimeout(faceTimer); if(animFrameId) cancelAnimationFrame(animFrameId);
-    if(moveRafId) cancelAnimationFrame(moveRafId); clearRoamTimer();
+    if (faceTimer) clearTimeout(faceTimer); if (animFrameId) cancelAnimationFrame(animFrameId);
+    if (moveRafId) cancelAnimationFrame(moveRafId); clearRoamTimer();
     stopMoving(); stopParticles();
   });
 }

@@ -69,7 +69,7 @@ export async function activate(ctx) {
       // 加载角色图片
       (async () => {
         try {
-          const r = await ctx.fs.getFileUrl(ctx.descriptor.directory + '/assets/character.png');
+          const r = await ctx.fs.getFileUrl(ctx.descriptor.directory + '/assets/character.webp');
           if (r?.url) charImg.value = r.url;
         } catch(_) {}
       })();
@@ -127,7 +127,7 @@ export async function activate(ctx) {
   // 加载角色图作为设置图标
   let icon = '🐱';
   try {
-    const r = await ctx.fs.getFileUrl(ctx.descriptor.directory + '/assets/character.png');
+    const r = await ctx.fs.getFileUrl(ctx.descriptor.directory + '/assets/character.webp');
     if (r?.url) icon = r.url;
   } catch(_) {}
 

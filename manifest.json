@@ -4,7 +4,7 @@
   "version": "1.0.1",
   "description": "桌宠——听歌的时候有个萌妹陪你,人物形象由栀设计提供",
   "author": "小栀",
-  "icon": "assets/character.png",
+  "icon": "assets/character.webp",
   "main": "index.js",
   "style": "style.css",
   "runtime": {
