@@ -1,0 +1,12 @@
+/* Echo Pet - 设置页面样式 */
+
+input[type="checkbox"] {
+  appearance: auto;
+  -webkit-appearance: auto;
+  accent-color: var(--color-primary, #31cfa1);
+}
+
+button {
+  user-select: none;
+  -webkit-user-select: none;
+}

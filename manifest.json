@@ -1,0 +1,52 @@
+{
+  "id": "echo-pet",
+  "name": "echo pet",
+  "version": "1.0.1",
+  "description": "桌宠——听歌的时候有个萌妹陪你,人物形象由栀设计提供",
+  "author": "小栀",
+  "icon": "assets/character.png",
+  "main": "index.js",
+  "style": "style.css",
+  "runtime": {
+    "miniPlayer": false,
+    "desktopLyric": false
+  },
+  "capabilities": {
+    "localFiles": false,
+    "audioSource": false,
+    "audioSpectrum": true,
+    "kugouApi": false,
+    "lyricEffects": false,
+    "lyrics": false,
+    "process": false
+  },
+  "contributes": {
+    "windows": [
+      {
+        "id": "pet-main",
+        "type": "floating",
+        "title": "Echo Pet",
+        "main": "pet-window.js",
+        "style": "pet-window.css",
+        "defaultWidth": 200,
+        "defaultHeight": 360,
+        "minWidth": 160,
+        "minHeight": 280,
+        "maxWidth": 300,
+        "maxHeight": 500,
+        "position": "center",
+        "transparent": true,
+        "alwaysOnTop": true,
+        "skipTaskbar": true,
+        "resizable": false,
+        "movable": true,
+        "rememberBounds": true,
+        "allowOutsideWorkArea": false,
+        "acceptFirstMouse": true
+      }
+    ]
+  },
+  "requires": {
+    "echoMusicVersion": ">=2.2.6-beta.9"
+  }
+}
